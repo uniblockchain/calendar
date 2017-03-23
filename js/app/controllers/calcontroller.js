@@ -26,8 +26,8 @@
 * Description: The fullcalendar controller.
 */
 
-app.controller('CalController', ['$scope', 'Calendar', 'CalendarService', 'VEventService', 'SettingsService', 'TimezoneService', 'VEvent', 'is', 'fc', 'EventsEditorDialogService', 'PopoverPositioningUtility', '$window', 'isPublic',
-	function ($scope, Calendar, CalendarService, VEventService, SettingsService, TimezoneService, VEvent, is, fc, EventsEditorDialogService, PopoverPositioningUtility, $window, isPublic) {
+app.controller('CalController', ['$scope', 'Calendar', 'CalendarService', 'VEventService', 'SettingsService', 'TimezoneService', 'VEvent', 'is', 'fc', 'EventsEditorDialogService', 'PopoverPositioningUtility', '$window', 'isPublic', '$http', '$rootScope', '$uibModal',
+	function ($scope, Calendar, CalendarService, VEventService, SettingsService, TimezoneService, VEvent, is, fc, EventsEditorDialogService, PopoverPositioningUtility, $window, isPublic, $http, $rootScope, $uibModal) {
 		'use strict';
 
 		is.loading = true;
@@ -144,6 +144,36 @@ app.controller('CalController', ['$scope', 'Calendar', 'CalendarService', 'VEven
 				// TODO - scope.apply should not be necessary here
 				$scope.$apply();
 			});
+		}
+
+		$scope.importFileByPath = function(path) {
+			return $http.get(
+				OC.linkToRemoteBase('dav') + '/files/' + OC.getCurrentUser().displayName + '/' + decodeURI(path)
+			).then(function(response) {
+				const fileName = decodeURIComponent(path);
+				const fileBody = response.data;
+				let file = new File([fileBody], fileName, {type: 'text/calendar'});
+
+				$uibModal.open({
+					templateUrl: 'import.html',
+					controller: 'ImportController',
+					windowClass: 'import',
+					backdropClass: 'import-backdrop',
+					keyboard: false,
+					appendTo: angular.element('#importpopover-container'),
+					resolve: {
+						files: function () {
+							return [file];
+						}
+					},
+					scope: $scope
+				});
+			});
+		};
+
+		var hashParts = $window.location.hash.substr(1).split('/');
+		if (!hashParts[0] && hashParts[1] === 'import' && hashParts[2]) {
+			$scope.importFileByPath(hashParts[2]);
 		}
 
 
