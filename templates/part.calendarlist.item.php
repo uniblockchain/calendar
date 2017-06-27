@@ -212,6 +212,33 @@
 				</span>
 			</span>
 		</li>
+		<li class="calendar-share-item"
+			ng-repeat="circleShare in item.calendar.shares.circles"
+			title="{{ circleShare.displayname }} (<?php p($l->t('circle')); ?>)">
+			{{ circleShare.displayname }} (<?php p($l->t('circle')); ?>) -
+			<span>
+				<input id="checkbox_sharedWithCircle_{{ $parent.$index }}_{{ $id }}"
+					   name="editable"
+					   class="checkbox"
+					   ng-change="updateExistingCircleShare(item.calendar, circleShare.id, circleShare.writable)"
+					   ng-model="circleShare.writable"
+					   type="checkbox"
+					   value="edit">
+				<label for="checkbox_sharedWithCircle_{{ $parent.$index }}_{{ $id }}">
+					<?php p($l->t('can edit')); ?>
+				</label>
+			</span>
+			<span class="utils hide">
+				<span class="action">
+					<span class="icon-delete"
+						  href="#"
+						  id="calendarlist-icon delete"
+						  ng-click="unshareFromCircle(item.calendar, circleShare.id)"
+						  title="<?php p($l->t('Delete')); ?>">
+					</span>
+				</span>
+			</span>
+		</li>
 	</ul>
 	<div class="publishing" ng-if="item.calendar.isPublishable()">
 		<input type="checkbox" name="publish"

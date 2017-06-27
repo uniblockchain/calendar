@@ -73,6 +73,7 @@ app.service('CalendarService', function(DavClient, StringUtility, XMLUtility, Ca
 
 	const SHARE_USER = constants.SHARE_TYPE_USER;
 	const SHARE_GROUP = constants.SHARE_TYPE_GROUP;
+	const SHARE_CIRCLE = constants.SHARE_TYPE_CIRCLE;
 
 	context.bootPromise = (function() {
 		if (isPublic) {
@@ -138,15 +139,17 @@ app.service('CalendarService', function(DavClient, StringUtility, XMLUtility, Ca
 	};
 
 	context.getShareValue = function(shareType, shareWith) {
-		if (shareType !== SHARE_USER && shareType !== SHARE_GROUP) {
+		if (shareType !== SHARE_USER && shareType !== SHARE_GROUP && shareType !== SHARE_CIRCLE) {
 			throw new Error('Unknown shareType given');
 		}
 
 		let hrefValue;
 		if (shareType === SHARE_USER) {
 			hrefValue = 'principal:principals/users/';
-		} else {
+		} else if (shareType === SHARE_GROUP) {
 			hrefValue = 'principal:principals/groups/';
+		} else {
+			hrefValue = 'principal:principals/circles/';
 		}
 		hrefValue += shareWith;
 
@@ -559,8 +562,14 @@ app.service('CalendarService', function(DavClient, StringUtility, XMLUtility, Ca
 					displayname: shareWith,
 					writable: writable
 				});
-			} else {
+			} else if (shareType === SHARE_GROUP) {
 				calendar.shares.groups.push({
+					id: shareWith,
+					displayname: shareWith,
+					writable: writable
+				});
+			} else {
+				calendar.shares.circles.push({
 					id: shareWith,
 					displayname: shareWith,
 					writable: writable
@@ -604,11 +613,16 @@ app.service('CalendarService', function(DavClient, StringUtility, XMLUtility, Ca
 					return user.id === shareWith;
 				});
 				calendar.shares.users.splice(index, 1);
-			} else {
+			} else if (shareType === SHARE_GROUP) {
 				const index = calendar.shares.groups.findIndex(function(group) {
 					return group.id === shareWith;
 				});
 				calendar.shares.groups.splice(index, 1);
+			} else {
+				const index = calendar.shares.circles.findIndex(function (circle) {
+					return circle.id === shareWith;
+				});
+				calendar.shares.circles.splice(index, 1);
 			}
 		});
 	};

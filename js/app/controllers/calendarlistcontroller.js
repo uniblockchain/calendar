@@ -208,6 +208,12 @@ app.controller('CalendarListController', ['$scope', '$rootScope', '$window', 'Ha
 			});
 		};
 
+		$scope.updateExistingCircleShare = function (calendar, circleId, writable) {
+			calendar.share(constants.SHARE_TYPE_CIRCLE, circleId, writable, true).then(function () {
+				$scope.$apply();
+			});
+		};
+
 		$scope.unshareFromUser = function(calendar, userId) {
 			calendar.unshare(constants.SHARE_TYPE_USER, userId).then(function() {
 				$scope.$apply();
@@ -217,6 +223,12 @@ app.controller('CalendarListController', ['$scope', '$rootScope', '$window', 'Ha
 		$scope.unshareFromGroup = function(calendar, groupId) {
 			calendar.unshare(constants.SHARE_TYPE_GROUP, groupId).then(function() {
 				$scope.$apply();
+			});
+		};
+
+		$scope.unshareFromCircle = function (calendar, circleId) {
+			calendar.unshare(constants.SHARE_TYPE_CIRCLE, circleId).then(function () {
+			$scope.$apply();
 			});
 		};
 
@@ -232,11 +244,15 @@ app.controller('CalendarListController', ['$scope', '$rootScope', '$window', 'Ha
 			).then(function(result) {
 				var users   = result.ocs.data.exact.users.concat(result.ocs.data.users);
 				var groups  = result.ocs.data.exact.groups.concat(result.ocs.data.groups);
+				var circles = result.ocs.data.exact.circles.concat(result.ocs.data.circles);
 
 				var userShares = calendar.shares.users;
 				var groupShares = calendar.shares.groups;
+				var circleShares = calendar.shares.circles;
 				var userSharesLength = userShares.length;
 				var groupSharesLength = groupShares.length;
+				var circleSharesLength = circleShares.length;
+				var share;
 				var i, j;
 
 				// Filter out current user
@@ -250,7 +266,7 @@ app.controller('CalendarListController', ['$scope', '$rootScope', '$window', 'Ha
 
 				// Now filter out all sharees that are already shared with
 				for (i = 0; i < userSharesLength; i++) {
-					var share = userShares[i];
+					share = userShares[i];
 					usersLength = users.length;
 					for (j = 0; j < usersLength; j++) {
 						if (users[j].value.shareWith === share.id) {
@@ -269,6 +285,19 @@ app.controller('CalendarListController', ['$scope', '$rootScope', '$window', 'Ha
 					};
 				});
 
+				// Remove already shared groups
+				var groupsLength = groups.length;
+				for (i = 0; i < groupSharesLength; i++) {
+					share = groupShares[i];
+					groupsLength = groups.length;
+					for (j = 0; j < groupsLength; j++) {
+						if (groups[j].value.shareWith === share.id) {
+							groups.splice(j, 1);
+							break;
+						}
+					}
+				}
+
 				groups = groups.map(function(item){
 					return {
 						display: item.label + ' (' + t('calendar', 'group') + ')',
@@ -277,7 +306,28 @@ app.controller('CalendarListController', ['$scope', '$rootScope', '$window', 'Ha
 					};
 				});
 
-				return groups.concat(users);
+				// Remove already shared circles
+				var circlesLength = circles.length;
+				for (i = 0; i < circleSharesLength; i++) {
+					share = circleShares[i];
+					circlesLength = circles.length;
+					for (j = 0; j < circlesLength; j++) {
+						if (circles[j].value.shareWith === share.id) {
+							circles.splice(j, 1);
+							break;
+						}
+					}
+				}
+
+				circles = circles.map(function (item) {
+					return {
+						display: item.label + ' (' + t('calendar', 'circle') + ')',
+						type: constants.SHARE_TYPE_CIRCLE,
+						identifier: item.value.shareWith
+					};
+				});
+
+				return groups.concat(users, circles);
 			});
 		};
 
